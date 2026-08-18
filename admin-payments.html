@@ -223,6 +223,19 @@ a{color:inherit;text-decoration:none}
 <div id="modal" class="modal hidden"><div class="card" id="modalBody"></div></div>
 <div id="toast" class="toast"></div>
 
+<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+<script>
+  const firebaseConfig = {
+    apiKey: "AIzaSyD1OYFiUxgHPsdNcy7UwJn-sNMA-EnMnCA",
+    authDomain: "absa-developers.firebaseapp.com",
+    projectId: "absa-developers",
+    storageBucket: "absa-developers.firebasestorage.app",
+    messagingSenderId: "559575822664",
+    appId: "1:559575822664:web:8b845785b2a0eed00437d"
+  };
+  firebase.initializeApp(firebaseConfig);
+</script>
 <script>
 /* ==========================================================================
    WebTeam Manager — shared core
@@ -238,7 +251,34 @@ if (!state.videos) state.videos = [];
 
 let current = null, role = null;
 
-function save() { localStorage.setItem(KEY, JSON.stringify(state)); }
+/* ---------------- Firebase (online, cross-device sync) ---------------- */
+const db = firebase.firestore();
+const dataDocRef = db.collection("webteam").doc("data");
+let dataReady = false;
+const readyCallbacks = [];
+function whenDataReady(cb) { if (dataReady) cb(); else readyCallbacks.push(cb); }
+dataDocRef.onSnapshot(function (doc) {
+  const d = doc.data() || {};
+  state.members = d.members || [];
+  state.clients = d.clients || [];
+  state.payments = d.payments || [];
+  state.commissions = d.commissions || [];
+  state.videos = d.videos || [];
+  localStorage.setItem(KEY, JSON.stringify(state));
+  dataReady = true;
+  readyCallbacks.forEach(function (cb) { cb(); });
+}, function (err) {
+  console.error("Firestore sync error:", err);
+  toast("Connection issue — data offline, check internet");
+});
+
+function save() {
+  localStorage.setItem(KEY, JSON.stringify(state));
+  return dataDocRef.set(state).catch(function (err) {
+    console.error("Firestore save error:", err);
+    toast("Save failed — check internet connection");
+  });
+}
 function id(prefix) { return prefix + "-" + Math.random().toString(36).slice(2, 8).toUpperCase(); }
 function money(n) { return "Rs. " + Number(n || 0).toLocaleString("en-PK"); }
 function esc(s) { return String(s || "").replace(/[&<>"']/g, m => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[m])); }
@@ -687,6 +727,8 @@ function sendBot(admin) {
 
 </script>
 <script>
+  whenDataReady(function () {
+
   initAdminShell('payments');
   document.getElementById("mainContent").innerHTML = `
     <div class="page-head"><div><p class="eyebrow">Money</p><h1>Payments</h1><p>Payment record karte hi commission khud generate hoti hai.</p></div></div>
@@ -694,6 +736,8 @@ function sendBot(admin) {
       ${role === "admin" ? '<button class="btn small-btn" onclick="openPaymentModal()">+ Record Payment</button>' : ''}
       <div class="table-wrap" style="margin-top:15px">${paymentTable()}</div>
     </div>`;
+
+  });
 </script>
 </body>
 </html>
