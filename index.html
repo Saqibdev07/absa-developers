@@ -716,12 +716,36 @@ function sendBot(admin) {
   const ans = admin ? adminBotAnswer(q) : memberBotAnswer(q);
   box.innerHTML += `<div class="msg bot">${ans}</div>`; box.scrollTop = box.scrollHeight;
 }
-
-</script>
-<script>
   redirectIfLoggedIn();
   const params = new URLSearchParams(location.search);
   if (params.get("ref")) document.getElementById("regRef").value = params.get("ref").toUpperCase();
+  </script>
+  <!-- Firebase & Real-time Database Script -->
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+  import { 
+    getFirestore, collection, addDoc, onSnapshot, serverTimestamp 
+  } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyD1OYFiUxgHPsdNcy7UwJn-sNMA-EnMnCA",
+    authDomain: "absa-developers.firebaseapp.com",
+    projectId: "absa-developers",
+    storageBucket: "absa-developers.firebasestorage.app",
+    messagingSenderId: "559575822664",
+    appId: "1:559575822664:web:8b845785b2a0eed00437d",
+    measurementId: "G-WWQPLGHGCE"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+
+  // Global functions taake aap ke baki script se access ho sakein
+  window.db = db;
+  window.addDoc = addDoc;
+  window.collection = collection;
+  window.onSnapshot = onSnapshot;
+  window.serverTimestamp = serverTimestamp;
 </script>
 </body>
 </html>
